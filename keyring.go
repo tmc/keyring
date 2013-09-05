@@ -1,10 +1,15 @@
 // Package keyring provides a cross-platform interface to keychains for
 // password management
-
-// TODO(tmc): Implement dummy local file storage
-// TODO(tmc): Write SecretService Provider
-// TODO(tmc): Write KWallet Provider?
-// TODO(tmc): Write gnome-keyring Provider?
+//
+// TODO: Write OSX Provider
+//
+// TODO: Write SecretService Provider
+//
+// TODO: Write KWallet Provider?
+//
+// TODO: Write gnome-keyring Provider?
+//
+// TODO: Implement dummy local file storage
 package keyring
 
 import "errors"
