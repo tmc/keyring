@@ -2,7 +2,9 @@ keyring provides cross-platform keychain access
 -----------------------------------------------
 
 Currently implemented:
-- (none)
+- OSX
+
+Contributions welcome!
 
 Example:
 

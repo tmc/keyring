@@ -4,15 +4,13 @@
 // Example:
 // 	pw, err := keyring.Get("libFoo", "john.doe")
 //
-// TODO: Write OSX Provider
-//
 // TODO: Write SecretService Provider
 //
 // TODO: Write KWallet Provider?
 //
 // TODO: Write gnome-keyring Provider?
 //
-// TODO: Implement dummy local file storage
+// TODO: Implement dummy local file storage ?
 package keyring
 
 import "errors"
