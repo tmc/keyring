@@ -22,6 +22,7 @@ func TestBasicSetGet(t *testing.T) {
 	if err != nil {
 		fmt.Println("Get() error:", err)
 	}
+
 	if pw != "test" {
 		fmt.Errorf("expected 'test', got '%s'", pw)
 	}

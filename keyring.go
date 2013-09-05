@@ -1,6 +1,9 @@
 // Package keyring provides a cross-platform interface to keychains for
 // password management
 //
+// Example:
+// 	pw, err := keyring.Get("libFoo", "john.doe")
+//
 // TODO: Write OSX Provider
 //
 // TODO: Write SecretService Provider
@@ -15,9 +18,10 @@ package keyring
 import "errors"
 
 var (
-	providers       map[string]Provider
+	providers       = map[string]Provider{}
 	defaultProvider Provider
-	ErrNoDefault    = errors.New("No default provider found")
+	// ErrNoDefault means that no default keyring provider has been found
+	ErrNoDefault = errors.New("No default provider found")
 )
 
 // Provider provides a simple interface to keychain sevice
@@ -44,7 +48,7 @@ func Set(Service, Username, Password string) error {
 	return defaultProvider.Set(Service, Username, Password)
 }
 
-// Fetch a map of registered Providers. Keys are provider short names
+// Providers provides a map of registered Providers keyed on short names
 func Providers() map[string]Provider {
 	p := make(map[string]Provider)
 	for k, v := range providers {
@@ -53,14 +57,11 @@ func Providers() map[string]Provider {
 	return p
 }
 
-// RegisterProvider registers a Provider with a short name
+// RegisterProvider registers a Provider with a short name (for use by Provider)
+// libraries
 func RegisterProvider(Name string, Provider Provider, makeDefault bool) {
 	providers[Name] = Provider
 	if makeDefault {
 		defaultProvider = Provider
 	}
-}
-
-func init() {
-	providers = make(map[string]Provider)
 }
