@@ -1,5 +1,6 @@
 keyring provides cross-platform keychain access
 -----------------------------------------------
+http://godoc.org/github.com/tmc/keyring
 
 Currently implemented:
 - OSX
