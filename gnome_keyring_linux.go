@@ -39,10 +39,11 @@ import "unsafe"
 import "fmt"
 
 var (
+	// Problem talking to the gnome-keychain daemon
 	ErrDaemonCommunicationError = fmt.Errorf("Error communicating with the gnome-keyring daemon")
 )
 
-var gk_errors = map[int]error{
+var gkErrors = map[int]error{
 	6: ErrDaemonCommunicationError,
 }
 
@@ -63,7 +64,7 @@ func (p gnomeKeyring) Set(Service, Username, Password string) error {
 		username,
 		password)
 	if result != C.GNOME_KEYRING_RESULT_OK {
-		if knownErr, ok := gk_errors[int(result)]; ok {
+		if knownErr, ok := gkErrors[int(result)]; ok {
 			return knownErr
 		}
 		return fmt.Errorf("Unknown gnome-keyring error: %d", int(result))
@@ -88,7 +89,7 @@ func (p gnomeKeyring) Get(Service string, Username string) (string, error) {
 		username,
 		&pwg)
 	if result != C.GNOME_KEYRING_RESULT_OK {
-		if knownErr, ok := gk_errors[int(result)]; ok {
+		if knownErr, ok := gkErrors[int(result)]; ok {
 			return "", knownErr
 		}
 		return "", fmt.Errorf("Unknown gnome-keyring error: %d", int(result))
