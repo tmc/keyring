@@ -16,10 +16,10 @@ package keyring
 import "errors"
 
 var (
+	// ErrNoDefault means that no default keyring provider has been found
+	ErrNoDefault    = errors.New("No default provider found")
 	providers       = map[string]Provider{}
 	defaultProvider Provider
-	// ErrNoDefault means that no default keyring provider has been found
-	ErrNoDefault = errors.New("No default provider found")
 )
 
 // Provider provides a simple interface to keychain sevice
