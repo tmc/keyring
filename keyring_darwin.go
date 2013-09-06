@@ -45,5 +45,5 @@ func (p osxProvider) Set(Service, Username, Password string) error {
 }
 
 func init() {
-	RegisterProvider("osxkeychain", osxProvider{}, true)
+	registerProvider("osxkeychain", osxProvider{}, true)
 }

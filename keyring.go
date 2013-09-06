@@ -57,7 +57,7 @@ func Providers() map[string]Provider {
 
 // RegisterProvider registers a Provider with a short name (for use by Provider)
 // libraries
-func RegisterProvider(Name string, Provider Provider, makeDefault bool) {
+func registerProvider(Name string, Provider Provider, makeDefault bool) {
 	providers[Name] = Provider
 	if makeDefault {
 		defaultProvider = Provider

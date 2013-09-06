@@ -98,5 +98,5 @@ func (p gnomeKeyring) Get(Service string, Username string) (string, error) {
 }
 
 func init() {
-	RegisterProvider("gnome-keyring", gnomeKeyring{}, true)
+	registerProvider("gnome-keyring", gnomeKeyring{}, true)
 }
