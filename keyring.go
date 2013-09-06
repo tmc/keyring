@@ -8,9 +8,7 @@
 //
 // TODO: Write KWallet Provider?
 //
-// TODO: Write gnome-keyring Provider?
-//
-// TODO: Implement dummy local file storage ?
+// TODO: Implement encrypted local file storage Provider ?
 package keyring
 
 import "errors"

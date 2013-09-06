@@ -4,6 +4,7 @@ http://godoc.org/github.com/tmc/keyring
 
 Currently implemented:
 - OSX
+- gnome-keychain (needs testing/love)
 
 Contributions welcome!
 
