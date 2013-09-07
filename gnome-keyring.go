@@ -4,7 +4,6 @@ package keyring
 
 /*
 #cgo pkg-config: gnome-keyring-1 glib-2.0
-#include <stdio.h>
 #include <stdlib.h>
 #include "gnome-keyring.h"
 
