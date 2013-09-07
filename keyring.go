@@ -4,16 +4,14 @@
 // Example:
 // 	pw, err := keyring.Get("libFoo", "john.doe")
 //
-// TODO: Write SecretService Provider
-//
-// TODO: Write KWallet Provider?
-//
-// TODO: Implement encrypted local file storage Provider ?
+// TODO: Write Windows Provider
 package keyring
 
 import "errors"
 
 var (
+	// ErrNotFound means the requested password was not found
+	ErrNotFound = errors.New("Password not found")
 	// ErrNoDefault means that no default keyring provider has been found
 	ErrNoDefault    = errors.New("No default provider found")
 	providers       = map[string]Provider{}
