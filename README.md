@@ -4,14 +4,20 @@ http://godoc.org/github.com/tmc/keyring
 
 Currently implemented:
 - OSX
-- gnome-keychain (needs testing/love)
+- gnome-keychain
 
 Contributions welcome!
+
+Linux requirements:
+- gnome-keychain headers:
+  `libgnome-keyring-dev` on ubuntu, `libgnome-keyring` on archlinux
 
 Example:
 
 ```go
+  err := keyring.Set("libraryFoo", "jack", "sacrifice")
   password, err := keyring.Get("libraryFoo", "jack")
-  err := keyring.Set("libraryFoo", "jack", "s4craf1ce")
+  fmt.Println(password)
+  Output: sacrifice
 ```
 License: ISC
