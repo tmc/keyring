@@ -29,14 +29,18 @@ Example (generic):
 ```
 
 
-Linux:
+Linux
+=====
 
 Linux requirements:
-- gnome-keychain headers:
+
+gnome-keychain headers:
   `libgnome-keyring-dev` on ubuntu, `libgnome-keyring` on archlinux
 
 Tests on Linux:
+```sh
  $ go test -tags gnome_keyring
+```
 
 
 Example (Linux, use gnome_keyring flag):
