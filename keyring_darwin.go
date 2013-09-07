@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"syscall"
 )
 
 type osxProvider struct {
@@ -19,12 +20,16 @@ func (p osxProvider) Get(Service, Username string) (string, error) {
 	c := exec.Command("security", args...)
 	o, err := c.CombinedOutput()
 	if err != nil {
+		exitCode := c.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+		// check particular exit code
+		if exitCode == 44 {
+			return "", ErrNotFound
+		}
 		return "", fmt.Errorf("security: %s", err)
 	}
 	matches := pwRe.FindStringSubmatch(string(o))
 	if len(matches) != 2 {
-		return "", fmt.Errorf("expected two submatches, got %d in: '%s'",
-			len(matches), string(o))
+		return "", ErrNotFound
 	}
 	return matches[1], nil
 }
@@ -45,5 +50,5 @@ func (p osxProvider) Set(Service, Username, Password string) error {
 }
 
 func init() {
-	registerProvider("osxkeychain", osxProvider{}, true)
+	defaultProvider = osxProvider{}
 }

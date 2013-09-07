@@ -2,15 +2,16 @@ keyring provides cross-platform keychain access
 -----------------------------------------------
 http://godoc.org/github.com/tmc/keyring
 
+Keyring provides a common interface to keyring/keychain tools.
+
+License: ISC
+
 Currently implemented:
 - OSX
 - gnome-keychain
 
 Contributions welcome!
 
-Linux requirements:
-- gnome-keychain headers:
-  `libgnome-keyring-dev` on ubuntu, `libgnome-keyring` on archlinux
 
 Example:
 
@@ -20,4 +21,27 @@ Example:
   fmt.Println(password)
   Output: sacrifice
 ```
-License: ISC
+
+Example (generic):
+```sh
+ $ go build github.com/tmc/keyring/example
+ $ ./example
+```
+
+
+Linux:
+
+Linux requirements:
+- gnome-keychain headers:
+  `libgnome-keyring-dev` on ubuntu, `libgnome-keyring` on archlinux
+
+Tests on Linux:
+ $ go test -tags gnome_keyring
+
+
+Example (Linux, use gnome_keyring flag):
+```sh
+ $ go build -tags gnome_keyring github.com/tmc/keyring/example
+ $ ./example
+```
+

@@ -12,15 +12,16 @@ func TestBasicSetGet(t *testing.T) {
 	)
 	pw, err = Get("keyring-test", "jack")
 	if err != nil {
+		// ok on initial invokation
 		fmt.Println("Get() error:", err)
 	}
 	err = Set("keyring-test", "jack", "test")
 	if err != nil {
-		fmt.Println("Set() error:", err)
+		t.Error("Set() error:", err)
 	}
 	pw, err = Get("keyring-test", "jack")
 	if err != nil {
-		fmt.Println("Get() error:", err)
+		t.Error("Get() error:", err)
 	}
 
 	if pw != "test" {

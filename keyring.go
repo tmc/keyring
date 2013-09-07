@@ -4,7 +4,7 @@
 // Example:
 // 	pw, err := keyring.Get("libFoo", "john.doe")
 //
-// TODO: Write Windows Provider
+// TODO: Write Windows provider
 package keyring
 
 import "errors"
@@ -13,13 +13,13 @@ var (
 	// ErrNotFound means the requested password was not found
 	ErrNotFound = errors.New("Password not found")
 	// ErrNoDefault means that no default keyring provider has been found
-	ErrNoDefault    = errors.New("No default provider found")
-	providers       = map[string]Provider{}
-	defaultProvider Provider
+	ErrNoDefault    = errors.New("No keyring provider found (check your build flags)")
+
+	defaultProvider provider
 )
 
-// Provider provides a simple interface to keychain sevice
-type Provider interface {
+// provider provides a simple interface to keychain sevice
+type provider interface {
 	Get(Service, Username string) (string, error)
 	Set(Service, Username, Password string) error
 }
@@ -40,22 +40,4 @@ func Set(Service, Username, Password string) error {
 		return ErrNoDefault
 	}
 	return defaultProvider.Set(Service, Username, Password)
-}
-
-// Providers provides a map of registered Providers keyed on short names
-func Providers() map[string]Provider {
-	p := make(map[string]Provider)
-	for k, v := range providers {
-		p[k] = v
-	}
-	return p
-}
-
-// RegisterProvider registers a Provider with a short name (for use by Provider)
-// libraries
-func registerProvider(Name string, Provider Provider, makeDefault bool) {
-	providers[Name] = Provider
-	if makeDefault {
-		defaultProvider = Provider
-	}
 }
