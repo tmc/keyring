@@ -12,7 +12,6 @@ package main
 import (
 	"os"
 	"fmt"
-	//"github.com/howeyc/gopass"
 	"code.google.com/p/gopass"
 	"github.com/tmc/keyring"
 )
@@ -26,8 +25,6 @@ func main() {
 		fmt.Println("got unexpected error:", err)
 		os.Exit(1)
 	}
-	//fmt.Print("enter new password: ")
-	//pw := string(gopass.GetPasswdMasked())
 	pw, err := gopass.GetPass("enter new password: ")
 	if err != nil {
 		fmt.Println(err)
