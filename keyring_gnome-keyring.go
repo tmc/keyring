@@ -1,4 +1,4 @@
-// +build gnome_keyring
+// +build linux,gnome_keyring
 
 package keyring
 
