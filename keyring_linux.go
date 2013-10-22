@@ -19,6 +19,7 @@ const (
 	ss_PromptIface     = "org.freedesktop.Secret.Prompt."
 )
 
+// The .Item interface speaks these. Note: Order is important
 type ss_Secret struct {
 	Session      dbus.ObjectPath
 	Parameters   []byte
@@ -26,6 +27,8 @@ type ss_Secret struct {
 	Content_type string
 }
 
+// We'll always use text/plain, may need tweaking if implementing encryption
+// other than "plain"
 func new_ss_Secret(session dbus.ObjectPath, secret string) (s ss_Secret) {
 	s = ss_Secret{
 		Content_type: "text/plain; charset=utf8",
@@ -36,12 +39,15 @@ func new_ss_Secret(session dbus.ObjectPath, secret string) (s ss_Secret) {
 	return
 }
 
-type SsLogger struct {
+// Currently hard-coded to use the 'default' keychain
+type SsProvider struct {
 	*dbus.Conn
 	srv *dbus.Object
 }
 
-func (s *SsLogger) openSession() (session *dbus.Object) {
+// This is used to open a seassion for every get/set. Alternative might be to
+// defer() the call to close when constructing the SsProvider
+func (s *SsProvider) openSession() (session *dbus.Object) {
 	var disregard dbus.Variant
 	var sessionPath dbus.ObjectPath
 	s.srv.Call(fmt.Sprint(ss_ServiceIface, "OpenSession"), 0, "plain", dbus.MakeVariant("")).Store(&disregard, &sessionPath)
@@ -49,7 +55,8 @@ func (s *SsLogger) openSession() (session *dbus.Object) {
 	return
 }
 
-func (s *SsLogger) unlock(p dbus.ObjectPath) error {
+// Unsure how the .Prompt call surfaces, it hasn't come up.
+func (s *SsProvider) unlock(p dbus.ObjectPath) error {
 	var unlocked []dbus.ObjectPath
 	var prompt dbus.ObjectPath
 	err := s.srv.Call(fmt.Sprint(ss_ServiceIface, "Unlock"), 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
@@ -62,7 +69,7 @@ func (s *SsLogger) unlock(p dbus.ObjectPath) error {
 	return nil
 }
 
-func (s *SsLogger) Get(c, u string) (string, error) {
+func (s *SsProvider) Get(c, u string) (string, error) {
 	var unlocked, locked []dbus.ObjectPath
 	var secret ss_Secret
 	search := map[string]string{
@@ -96,7 +103,7 @@ func (s *SsLogger) Get(c, u string) (string, error) {
 	return string(secret.Value), nil
 }
 
-func (s *SsLogger) Set(c, u, p string) error {
+func (s *SsProvider) Set(c, u, p string) error {
 	var item, prompt dbus.ObjectPath
 	properties := map[string]dbus.Variant{
 		"org.freedesktop.Secret.Item.Label": dbus.MakeVariant(fmt.Sprintf("%s - %s", u, c)),
@@ -135,5 +142,5 @@ func init() {
 		return
 	}
 
-	defaultProvider = &SsLogger{conn, srv}
+	defaultProvider = &SsProvider{conn, srv}
 }
