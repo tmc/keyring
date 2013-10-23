@@ -154,9 +154,8 @@ func init() {
 	if session, err := p.openSession(); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to open dbus session %s: %s\n", srv, err)
 		return
-	} else {
-		session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 	}
+	session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 
 	defaultProvider = p
 }
