@@ -30,9 +30,15 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	keyring.Set("keyring_example", "jack", pw)
+	fmt.Println("setting keyring_example/jack to..", pw)
+	err = keyring.Set("keyring_example", "jack", pw)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("fetching keyring_example/jack..")
 	if pw, err := keyring.Get("keyring_example", "jack"); err == nil {
-		fmt.Println("stored", pw)
+		fmt.Println("got", pw)
 	} else {
 		fmt.Println("error:", err)
 	}
