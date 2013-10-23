@@ -5,12 +5,13 @@ package keyring
 import (
 	"fmt"
 	dbus "github.com/guelfey/go.dbus"
+	"os"
 )
 
 const (
-	ssServiceName    = "org.freedesktop.secrets"
-	ssServicePath    = "/org/freedesktop/secrets"
-	ssCollectionPath = "/org/freedesktop/secrets/collection/default"
+	ssServiceName     = "org.freedesktop.secrets"
+	ssServicePath     = "/org/freedesktop/secrets"
+	ssCollectionPath  = "/org/freedesktop/secrets/collection/Default"
 	ssServiceIface    = "org.freedesktop.Secret.Service."
 	ssSessionIface    = "org.freedesktop.Secret.Session."
 	ssCollectionIface = "org.freedesktop.Secret.Collection."
@@ -21,9 +22,9 @@ const (
 // ssSecret corresponds to org.freedesktop.Secret.Item
 // Note: Order is important
 type ssSecret struct {
-	Session      dbus.ObjectPath
-	Parameters   []byte
-	Value        []byte
+	Session     dbus.ObjectPath
+	Parameters  []byte
+	Value       []byte
 	ContentType string `dbus:"Content_type"`
 }
 
@@ -32,9 +33,9 @@ type ssSecret struct {
 func newSSSecret(session dbus.ObjectPath, secret string) (s ssSecret) {
 	s = ssSecret{
 		ContentType: "text/plain; charset=utf8",
-		Parameters:   []byte{},
-		Session:      session,
-		Value:        []byte(secret),
+		Parameters:  []byte{},
+		Session:     session,
+		Value:       []byte(secret),
 	}
 	return
 }
@@ -62,14 +63,17 @@ func (s *SsProvider) openSession() (*dbus.Object, error) {
 func (s *SsProvider) unlock(p dbus.ObjectPath) error {
 	var unlocked []dbus.ObjectPath
 	var prompt dbus.ObjectPath
-	err := s.srv.Call(fmt.Sprint(ssServiceIface, "Unlock"), 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
+	path := fmt.Sprint(ssServiceIface, "Unlock")
+	err := s.srv.Call(path, 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
 	if err != nil {
-		return err
+		return fmt.Errorf("keyring/dbus: Unlock error: %s", err)
 	}
-	if prompt != dbus.ObjectPath("/") {
-		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
+	if prompt == dbus.ObjectPath("/") {
+		return fmt.Errorf("keyring/dbus: Unexpected prompt of '/' returned")
 	}
-	return nil
+	path = fmt.Sprint(ssPromptIface, "Prompt")
+	call := s.Object(ssServiceName, prompt).Call(path, 0, "unlock")
+	return call.Err
 }
 
 func (s *SsProvider) Get(c, u string) (string, error) {
@@ -87,25 +91,33 @@ func (s *SsProvider) Get(c, u string) (string, error) {
 	s.unlock(ssCollectionPath)
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
-	collection.Call(fmt.Sprint(ssCollectionIface, "SearchItems"), 0, search).Store(&unlocked, &locked)
+	path := fmt.Sprint(ssCollectionIface, "SearchItems")
+
+	err = collection.Call(path, 0, search).Store(&unlocked, &locked)
 	// results is a slice. Just grab the first one.
 	if len(unlocked) == 0 && len(locked) == 0 {
 		return "", ErrNotFound
 	}
+	path = fmt.Sprint(ssItemIface, "GetSecret")
 	if len(unlocked) == 0 {
 		for _, r := range locked {
 			s.unlock(r)
-			s.Object(ssServiceName, r).Call(fmt.Sprint(ssItemIface, "GetSecret"), 0, session.Path()).Store(&secret)
+			s.Object(ssServiceName, r).Call(path, 0, session.Path()).Store(&secret)
+			fmt.Println("GetSecret", secret)
 			break
 		}
 	} else {
 		for _, r := range unlocked {
-			s.Object(ssServiceName, r).Call(fmt.Sprint(ssItemIface, "GetSecret"), 0, session.Path()).Store(&secret)
+			s.Object(ssServiceName, r).Call(path, 0, session.Path()).Store(&secret)
+			fmt.Println("GetSecret", secret)
 			break
 		}
 	}
 
-	session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
+	call := session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
+	if call.Err != nil {
+		return "", call.Err
+	}
 	return string(secret.Value), nil
 }
 
@@ -128,18 +140,21 @@ func (s *SsProvider) Set(c, u, p string) error {
 
 	secret := newSSSecret(session.Path(), p)
 	// the bool is "replace"
-	collection.Call(fmt.Sprint(ssCollectionIface, "CreateItem"), 0, properties, secret, true).Store(&item, &prompt)
+	err = collection.Call(fmt.Sprint(ssCollectionIface, "CreateItem"), 0, properties, secret, true).Store(&item, &prompt)
+	if err != nil {
+		return fmt.Errorf("keyring/dbus: CreateItem error: %s", err)
+	}
 	if prompt != "/" {
 		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
 	}
-	session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	return nil
+	call := session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
+	return call.Err
 }
 
 func init() {
 	conn, err := dbus.SessionBus()
 	if err != nil {
-		fmt.Println("keyring/dbus: Error connecting to dbus session, not registering SecretService provider")
+		fmt.Fprintln(os.Stderr, "keyring/dbus: Error connecting to dbus session, not registering SecretService provider")
 		return
 	}
 	srv := conn.Object(ssServiceName, ssServicePath)
@@ -148,7 +163,7 @@ func init() {
 	// Everything should implement dbus peer, so ping to make sure we have an object...
 	_, err = p.openSession()
 	if err != nil {
-		fmt.Printf("Unable to open session%s%s: %s\n", conn, srv, err)
+		fmt.Fprintf(os.Stderr, "Unable to open session%s%s: %s\n", conn, srv, err)
 		return
 	}
 
