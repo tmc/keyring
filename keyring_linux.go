@@ -25,7 +25,7 @@ type ssSecret struct {
 	Session     dbus.ObjectPath
 	Parameters  []byte
 	Value       []byte
-	ContentType string `dbus:"Content_type"`
+	ContentType string `dbus:"content_type"`
 }
 
 // newSSSecret prepares an ssSecret for use
@@ -40,15 +40,15 @@ func newSSSecret(session dbus.ObjectPath, secret string) (s ssSecret) {
 	return
 }
 
-// SsProvider implements the provider interface freedesktop SecretService
-type SsProvider struct {
+// ssProvider implements the provider interface freedesktop SecretService
+type ssProvider struct {
 	*dbus.Conn
 	srv *dbus.Object
 }
 
 // This is used to open a seassion for every get/set. Alternative might be to
-// defer() the call to close when constructing the SsProvider
-func (s *SsProvider) openSession() (*dbus.Object, error) {
+// defer() the call to close when constructing the ssProvider
+func (s *ssProvider) openSession() (*dbus.Object, error) {
 	var disregard dbus.Variant
 	var sessionPath dbus.ObjectPath
 	path := fmt.Sprint(ssServiceIface, "OpenSession")
@@ -60,7 +60,7 @@ func (s *SsProvider) openSession() (*dbus.Object, error) {
 }
 
 // Unsure how the .Prompt call surfaces, it hasn't come up.
-func (s *SsProvider) unlock(p dbus.ObjectPath) error {
+func (s *ssProvider) unlock(p dbus.ObjectPath) error {
 	var unlocked []dbus.ObjectPath
 	var prompt dbus.ObjectPath
 	path := fmt.Sprint(ssServiceIface, "Unlock")
@@ -76,8 +76,8 @@ func (s *SsProvider) unlock(p dbus.ObjectPath) error {
 	return call.Err
 }
 
-func (s *SsProvider) Get(c, u string) (string, error) {
-	var unlocked, locked []dbus.ObjectPath
+func (s *ssProvider) Get(c, u string) (string, error) {
+	results := []dbus.ObjectPath{}
 	var secret ssSecret
 	search := map[string]string{
 		"username": u,
@@ -88,40 +88,30 @@ func (s *SsProvider) Get(c, u string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 	s.unlock(ssCollectionPath)
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
 	path := fmt.Sprint(ssCollectionIface, "SearchItems")
-
-	err = collection.Call(path, 0, search).Store(&unlocked, &locked)
-	// results is a slice. Just grab the first one.
-	if len(unlocked) == 0 && len(locked) == 0 {
-		return "", ErrNotFound
-	}
-	path = fmt.Sprint(ssItemIface, "GetSecret")
-	if len(unlocked) == 0 {
-		for _, r := range locked {
-			s.unlock(r)
-			s.Object(ssServiceName, r).Call(path, 0, session.Path()).Store(&secret)
-			fmt.Println("GetSecret", secret)
-			break
-		}
-	} else {
-		for _, r := range unlocked {
-			s.Object(ssServiceName, r).Call(path, 0, session.Path()).Store(&secret)
-			fmt.Println("GetSecret", secret)
-			break
-		}
-	}
-
-	call := session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
+	call := collection.Call(path, 0, search)
+	err = call.Store(&results)
 	if call.Err != nil {
 		return "", call.Err
+	}
+	// results is a slice. Just grab the first one.
+	if len(results) == 0 {
+		return "", ErrNotFound
+	}
+
+	path = fmt.Sprint(ssItemIface, "GetSecret")
+	err = s.Object(ssServiceName, results[0]).Call(path, 0, session.Path()).Store(&secret)
+	if err != nil {
+		return "", err
 	}
 	return string(secret.Value), nil
 }
 
-func (s *SsProvider) Set(c, u, p string) error {
+func (s *ssProvider) Set(c, u, p string) error {
 	var item, prompt dbus.ObjectPath
 	properties := map[string]dbus.Variant{
 		"org.freedesktop.Secret.Item.Label": dbus.MakeVariant(fmt.Sprintf("%s - %s", u, c)),
@@ -135,6 +125,7 @@ func (s *SsProvider) Set(c, u, p string) error {
 	if err != nil {
 		return err
 	}
+	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 	s.unlock(ssCollectionPath)
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
@@ -147,8 +138,7 @@ func (s *SsProvider) Set(c, u, p string) error {
 	if prompt != "/" {
 		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
 	}
-	call := session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	return call.Err
+	return nil
 }
 
 func init() {
@@ -158,13 +148,14 @@ func init() {
 		return
 	}
 	srv := conn.Object(ssServiceName, ssServicePath)
-	p := &SsProvider{conn, srv}
+	p := &ssProvider{conn, srv}
 
 	// Everything should implement dbus peer, so ping to make sure we have an object...
-	_, err = p.openSession()
-	if err != nil {
+	if session, err := p.openSession(); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to open dbus session %s: %s\n", srv, err)
 		return
+	} else {
+		session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 	}
 
 	defaultProvider = p
