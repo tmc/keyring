@@ -1,5 +1,5 @@
-keyring provides cross-platform keychain access
------------------------------------------------
+# keyring provides cross-platform keychain access
+
 http://godoc.org/github.com/tmc/keyring
 
 Keyring provides a common interface to keyring/keychain tools.
@@ -8,12 +8,12 @@ License: ISC
 
 Currently implemented:
 - OSX
-- gnome-keychain
+- SecretService
+- gnome-keychain (via "gnome_keyring" build flag)
 
 Contributions welcome!
 
-
-Example:
+Usage example:
 
 ```go
   err := keyring.Set("libraryFoo", "jack", "sacrifice")
@@ -22,30 +22,38 @@ Example:
   Output: sacrifice
 ```
 
-Example (generic):
+Example program:
 ```sh
- $ go build github.com/tmc/keyring/example
- $ ./example
+ $ go get -v github.com/tmc/keyring/keyring-example && keyring-example
 ```
 
 
-Linux
-=====
+## Linux
 
 Linux requirements:
 
-gnome-keychain headers:
-  `libgnome-keyring-dev` on ubuntu, `libgnome-keyring` on archlinux
+### SecretService provider
+
+- dbus
+
+### gnome-keychain provider
+
+- gnome-keychain headers
+- Ubuntu/Debian: `libgnome-keyring-dev`
+- Archlinux: `libgnome-keyring`
 
 Tests on Linux:
 ```sh
- $ go test -tags gnome_keyring
+ $ go test github.com/tmc/keyring
+ $ # for gnome-keyring provider
+ $ go test -tags gnome_keyring github.com/tmc/keyring
 ```
 
-
-Example (Linux, use gnome_keyring flag):
+Example:
 ```sh
- $ go build -tags gnome_keyring github.com/tmc/keyring/example
- $ ./example
+ $ # for SecretService provider
+ $ go get -v github.com/tmc/keyring/keyring-example && keyring-example
+ $ # for gnome-keyring provider
+ $ go get -v -tags gnome_keyring github.com/tmc/keyring/keyring-example && keyring-example
 ```
 
