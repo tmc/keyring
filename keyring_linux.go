@@ -4,7 +4,7 @@ package keyring
 
 import (
 	"fmt"
-	"github.com/guelfey/go.dbus"
+	dbus "github.com/guelfey/go.dbus"
 )
 
 const (
@@ -47,12 +47,15 @@ type SsProvider struct {
 
 // This is used to open a seassion for every get/set. Alternative might be to
 // defer() the call to close when constructing the SsProvider
-func (s *SsProvider) openSession() (session *dbus.Object) {
+func (s *SsProvider) openSession() (*dbus.Object, error) {
 	var disregard dbus.Variant
 	var sessionPath dbus.ObjectPath
-	s.srv.Call(fmt.Sprint(ss_ServiceIface, "OpenSession"), 0, "plain", dbus.MakeVariant("")).Store(&disregard, &sessionPath)
-	session = s.Object(ss_ServiceName, sessionPath)
-	return
+	path := fmt.Sprint(ss_ServiceIface, "OpenSession")
+	err := s.srv.Call(path, 0, "plain", dbus.MakeVariant("")).Store(&disregard, &sessionPath)
+	if err != nil {
+		return nil, err
+	}
+	return s.Object(ss_ServiceName, sessionPath), nil
 }
 
 // Unsure how the .Prompt call surfaces, it hasn't come up.
@@ -77,7 +80,10 @@ func (s *SsProvider) Get(c, u string) (string, error) {
 		"service":  c,
 	}
 
-	session := s.openSession()
+	session, err := s.openSession()
+	if err != nil {
+		return "", err
+	}
 	s.unlock(ss_CollectionPath)
 	collection := s.Object(ss_ServiceName, ss_CollectionPath)
 
@@ -113,7 +119,10 @@ func (s *SsProvider) Set(c, u, p string) error {
 		}),
 	}
 
-	session := s.openSession()
+	session, err := s.openSession()
+	if err != nil {
+		return err
+	}
 	s.unlock(ss_CollectionPath)
 	collection := s.Object(ss_ServiceName, ss_CollectionPath)
 
@@ -133,14 +142,15 @@ func init() {
 		fmt.Println("Error connecting to bus, bailing")
 		return
 	}
-
 	srv := conn.Object(ss_ServiceName, ss_ServicePath)
+	p := &SsProvider{conn, srv}
 
 	// Everything should implement dbus peer, so ping to make sure we have an object...
-	if o := srv.Call("Ping", 0); o.Err != nil {
-		fmt.Println("Unable to ping service object, we should be able to.")
+	_, err = p.openSession()
+	if err != nil {
+		fmt.Printf("Unable to open session%s%s: %s\n", conn, srv, err)
 		return
 	}
 
-	defaultProvider = &SsProvider{conn, srv}
+	defaultProvider = p
 }
