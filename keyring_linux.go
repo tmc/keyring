@@ -163,7 +163,7 @@ func init() {
 	// Everything should implement dbus peer, so ping to make sure we have an object...
 	_, err = p.openSession()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to open session%s%s: %s\n", conn, srv, err)
+		fmt.Fprintf(os.Stderr, "Unable to open dbus session %s: %s\n", srv, err)
 		return
 	}
 
