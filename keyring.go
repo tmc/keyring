@@ -1,10 +1,3 @@
-// Package keyring provides a cross-platform interface to keychains for
-// password management
-//
-// Example:
-// 	pw, err := keyring.Get("libFoo", "john.doe")
-//
-// TODO: Write Windows provider
 package keyring
 
 import "errors"

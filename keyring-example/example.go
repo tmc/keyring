@@ -1,11 +1,7 @@
 // Shows example use of the keyring package
 //
 // May need to be built with a platform-specific build flag to specify a
-// provider.
-//
-// For Example, on Linux, to use the gnome-keyring provider:
-// 	$ go build +gnome_keyring github.com/tmc/keyring/example
-// 	$ ./example
+// provider. See keyring documentation for details.
 //
 package main
 
