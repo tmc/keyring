@@ -5,7 +5,6 @@ import (
 	"github.com/tmc/keyring"
 )
 
-
 func ExampleGet() {
 	keyring.Set("keyring-test", "jack", "test password")
 	pw, _ := keyring.Get("keyring-test", "jack")

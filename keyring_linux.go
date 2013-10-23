@@ -51,8 +51,8 @@ type ssProvider struct {
 func (s *ssProvider) openSession() (*dbus.Object, error) {
 	var disregard dbus.Variant
 	var sessionPath dbus.ObjectPath
-	path := fmt.Sprint(ssServiceIface, "OpenSession")
-	err := s.srv.Call(path, 0, "plain", dbus.MakeVariant("")).Store(&disregard, &sessionPath)
+	method := fmt.Sprint(ssServiceIface, "OpenSession")
+	err := s.srv.Call(method, 0, "plain", dbus.MakeVariant("")).Store(&disregard, &sessionPath)
 	if err != nil {
 		return nil, err
 	}
@@ -63,17 +63,17 @@ func (s *ssProvider) openSession() (*dbus.Object, error) {
 func (s *ssProvider) unlock(p dbus.ObjectPath) error {
 	var unlocked []dbus.ObjectPath
 	var prompt dbus.ObjectPath
-	path := fmt.Sprint(ssServiceIface, "Unlock")
-	err := s.srv.Call(path, 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
+	method := fmt.Sprint(ssServiceIface, "Unlock")
+	err := s.srv.Call(method, 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
 	if err != nil {
 		return fmt.Errorf("keyring/dbus: Unlock error: %s", err)
 	}
-	if prompt == dbus.ObjectPath("/") {
-		return fmt.Errorf("keyring/dbus: Unexpected prompt of '/' returned")
+	if prompt != dbus.ObjectPath("/") {
+		method = fmt.Sprint(ssPromptIface, "Prompt")
+		call := s.Object(ssServiceName, prompt).Call(method, 0, "unlock")
+		return call.Err
 	}
-	path = fmt.Sprint(ssPromptIface, "Prompt")
-	call := s.Object(ssServiceName, prompt).Call(path, 0, "unlock")
-	return call.Err
+	return nil
 }
 
 func (s *ssProvider) Get(c, u string) (string, error) {
@@ -92,8 +92,8 @@ func (s *ssProvider) Get(c, u string) (string, error) {
 	s.unlock(ssCollectionPath)
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
-	path := fmt.Sprint(ssCollectionIface, "SearchItems")
-	call := collection.Call(path, 0, search)
+	method := fmt.Sprint(ssCollectionIface, "SearchItems")
+	call := collection.Call(method, 0, search)
 	err = call.Store(&results)
 	if call.Err != nil {
 		return "", call.Err
@@ -103,8 +103,8 @@ func (s *ssProvider) Get(c, u string) (string, error) {
 		return "", ErrNotFound
 	}
 
-	path = fmt.Sprint(ssItemIface, "GetSecret")
-	err = s.Object(ssServiceName, results[0]).Call(path, 0, session.Path()).Store(&secret)
+	method = fmt.Sprint(ssItemIface, "GetSecret")
+	err = s.Object(ssServiceName, results[0]).Call(method, 0, session.Path()).Store(&secret)
 	if err != nil {
 		return "", err
 	}
@@ -154,8 +154,9 @@ func init() {
 	if session, err := p.openSession(); err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to open dbus session %s: %s\n", srv, err)
 		return
+	} else {
+		session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 	}
-	session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
 
 	defaultProvider = p
 }
