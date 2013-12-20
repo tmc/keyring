@@ -13,24 +13,24 @@ var (
 
 // provider provides a simple interface to keychain sevice
 type provider interface {
-	Get(Service, Username string) (string, error)
-	Set(Service, Username, Password string) error
+	Get(service, username string) (string, error)
+	Set(service, username, password string) error
 }
 
 // Get gets the password for a paricular Service and Username using the
 // default keyring provider.
-func Get(Service, Username string) (string, error) {
+func Get(service, username string) (string, error) {
 	if defaultProvider == nil {
 		return "", ErrNoDefault
 	}
-	return defaultProvider.Get(Service, Username)
+	return defaultProvider.Get(service, username)
 }
 
 // Set sets the password for a particular Service and Username using the
 // default keyring provider.
-func Set(Service, Username, Password string) error {
+func Set(service, username, password string) error {
 	if defaultProvider == nil {
 		return ErrNoDefault
 	}
-	return defaultProvider.Set(Service, Username, Password)
+	return defaultProvider.Set(service, username, password)
 }
