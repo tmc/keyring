@@ -4,9 +4,9 @@ import "errors"
 
 var (
 	// ErrNotFound means the requested password was not found
-	ErrNotFound = errors.New("Password not found")
+	ErrNotFound = errors.New("keyring: Password not found")
 	// ErrNoDefault means that no default keyring provider has been found
-	ErrNoDefault = errors.New("No keyring provider found (check your build flags)")
+	ErrNoDefault = errors.New("keyring: No suitable keyring provider found (check your build flags)")
 
 	defaultProvider provider
 )
