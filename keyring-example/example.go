@@ -6,10 +6,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"code.google.com/p/gopass"
+	"os"
+	"syscall"
+
 	"github.com/tmc/keyring"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func main() {
@@ -21,13 +23,15 @@ func main() {
 		fmt.Println("got unexpected error:", err)
 		os.Exit(1)
 	}
-	pw, err := gopass.GetPass("enter new password: ")
+
+	fmt.Printf("enter new password: ")
+	pw, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	fmt.Println("setting keyring_example/jack to..", pw)
-	err = keyring.Set("keyring_example", "jack", pw)
+	err = keyring.Set("keyring_example", "jack", string(pw))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
