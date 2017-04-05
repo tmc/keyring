@@ -4,6 +4,7 @@ package keyring
 
 import (
 	"fmt"
+
 	dbus "github.com/guelfey/go.dbus"
 )
 
@@ -140,22 +141,12 @@ func (s *ssProvider) Set(c, u, p string) error {
 	return nil
 }
 
-func init() {
+func initializeProvider() (provider, error) {
 	conn, err := dbus.SessionBus()
 	if err != nil {
-		providerInitError = fmt.Errorf("keyring/dbus: Error connecting to dbus session, not registering SecretService provider")
-		return
+		return nil, err
 	}
 	srv := conn.Object(ssServiceName, ssServicePath)
 	p := &ssProvider{conn, srv}
-
-	// Everything should implement dbus peer, so ping to make sure we have an object...
-	if session, err := p.openSession(); err != nil {
-		providerInitError = fmt.Errorf("Unable to open dbus session %s: %s\n", srv, err)
-		return
-	} else {
-		session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	}
-
-	defaultProvider = p
+	return p, nil
 }

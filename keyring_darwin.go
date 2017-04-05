@@ -49,6 +49,6 @@ func (p osxProvider) Set(Service, Username, Password string) error {
 	return nil
 }
 
-func init() {
-	defaultProvider = osxProvider{}
+func initializeProvider() (provider, error) {
+	return osxProvider{}, nil
 }

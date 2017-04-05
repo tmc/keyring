@@ -1,6 +1,9 @@
 package keyring
 
-import "errors"
+import (
+	"errors"
+	"sync"
+)
 
 var (
 	// ErrNotFound means the requested password was not found
@@ -8,6 +11,7 @@ var (
 	// ErrNoDefault means that no default keyring provider has been found
 	ErrNoDefault = errors.New("keyring: No suitable keyring provider found (check your build flags)")
 
+	providerInitOnce  sync.Once
 	defaultProvider   provider
 	providerInitError error
 )
@@ -18,26 +22,37 @@ type provider interface {
 	Set(service, username, password string) error
 }
 
+func setupProvider() (provider, error) {
+	providerInitOnce.Do(func() {
+		defaultProvider, providerInitError = initializeProvider()
+	})
+
+	if providerInitError != nil {
+		return nil, providerInitError
+	} else if defaultProvider == nil {
+		return nil, ErrNoDefault
+	}
+	return defaultProvider, nil
+}
+
 // Get gets the password for a paricular Service and Username using the
 // default keyring provider.
 func Get(service, username string) (string, error) {
-	if providerInitError != nil {
-		return "", providerInitError
-	} else if defaultProvider == nil {
-		return "", ErrNoDefault
+	p, err := setupProvider()
+	if err != nil {
+		return "", err
 	}
 
-	return defaultProvider.Get(service, username)
+	return p.Get(service, username)
 }
 
 // Set sets the password for a particular Service and Username using the
 // default keyring provider.
 func Set(service, username, password string) error {
-	if providerInitError != nil {
-		return providerInitError
-	} else if defaultProvider == nil {
-		return ErrNoDefault
+	p, err := setupProvider()
+	if err != nil {
+		return err
 	}
 
-	return defaultProvider.Set(service, username, password)
+	return p.Set(service, username, password)
 }
