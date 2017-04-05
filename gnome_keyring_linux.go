@@ -91,6 +91,6 @@ func (p gnomeKeyring) Get(Service string, Username string) (string, error) {
 	return C.GoString((*C.char)(pw)), nil
 }
 
-func init() {
-	defaultProvider = gnomeKeyring{}
+func initializeProvider() (provider, error) {
+	return gnomeKeyring{}, nil
 }
