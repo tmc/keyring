@@ -10,7 +10,7 @@ import (
 type osxProvider struct {
 }
 
-var pwRe = regexp.MustCompile("password: \"(.+)\"")
+var pwRe = regexp.MustCompile(`password:\s+(?:0x[A-Fa-f0-9]+\s+)?"(.+)"`)
 
 func (p osxProvider) Get(Service, Username string) (string, error) {
 	args := []string{"find-generic-password",
