@@ -1,11 +1,10 @@
 package keyring
 
 import (
-	"fmt"
 	"testing"
 )
 
-func AssertPasswordSticks(t *testing.T, user, password string) {
+func assertPasswordSticks(t *testing.T, user, password string) {
 	var (
 		pw  string
 		err error
@@ -13,11 +12,11 @@ func AssertPasswordSticks(t *testing.T, user, password string) {
 	pw, err = Get("keyring-test", user)
 	if err != nil {
 		// ok on initial invokation
-		fmt.Println("Get() error:", err)
+		t.Errorf("Initial Get() error for %s: %s", user, err)
 	}
 	err = Set("keyring-test", user, password)
 	if err != nil {
-		t.Error("Set() error:", err)
+		t.Errorf("Set() error for %s: %s", user, err)
 	}
 	pw, err = Get("keyring-test", user)
 	if err != nil {
@@ -25,12 +24,21 @@ func AssertPasswordSticks(t *testing.T, user, password string) {
 	}
 
 	if pw != password {
-		fmt.Errorf("expected 'test', got '%s'", pw)
-		t.Fail()
+		t.Errorf("expected '%s' for %s, got '%s'", password, user, pw)
 	}
 }
 
 func TestBasicSetGet(t *testing.T) {
-	AssertPasswordSticks(t, "jack", "pass")
-	AssertPasswordSticks(t, "alice", "cr4zyp!s\\%")
+	cases := []struct {
+		user     string
+		password string
+	}{
+		{"jack", "foo"},
+		{"jill", "bar"},
+		{"alice", "cr4zyp!s\\%"},
+		{"punctuator", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"},
+	}
+	for _, testCase := range cases {
+		assertPasswordSticks(t, testCase.user, testCase.password)
+	}
 }
