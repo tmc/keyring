@@ -12,7 +12,7 @@ func assertPasswordSticks(t *testing.T, user, password string) {
 	pw, err = Get("keyring-test", user)
 	if err != nil {
 		// ok on initial invokation
-		t.Errorf("Initial Get() error for %s: %s", user, err)
+		t.Logf("(expected) Initial Get() error for %s: %s", user, err)
 	}
 	err = Set("keyring-test", user, password)
 	if err != nil {
