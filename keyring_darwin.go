@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
-	"strings"
+	"strconv"
 	"syscall"
 )
 
@@ -13,8 +13,19 @@ type osxProvider struct {
 
 var pwRe = regexp.MustCompile(`password:\s+(?:0x[A-Fa-f0-9]+\s+)?"(.+)"`)
 
+var escapeCodeRegexp = regexp.MustCompile(`\\([0-3][0-7]{2})`)
+
+func unescapeOne(code []byte) []byte {
+	i, _ := strconv.ParseUint(string(code[1:]), 8, 8)
+	return []byte{byte(i)}
+}
+
 func unescape(raw string) string {
-	return strings.Replace(raw, "\\134", "\\", -1)
+	if !escapeCodeRegexp.MatchString(raw) {
+		return raw
+	} else {
+		return string(escapeCodeRegexp.ReplaceAllFunc([]byte(raw), unescapeOne))
+	}
 }
 
 func (p osxProvider) Get(Service, Username string) (string, error) {

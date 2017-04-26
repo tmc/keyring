@@ -37,6 +37,8 @@ func TestBasicSetGet(t *testing.T) {
 		{"jill", "bar"},
 		{"alice", "cr4zyp!s\\%"},
 		{"punctuator", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"},
+		{"pierre", "bérets"},
+		{"unibomba", "I❤Unicode"},
 	}
 	for _, testCase := range cases {
 		assertPasswordSticks(t, testCase.user, testCase.password)
