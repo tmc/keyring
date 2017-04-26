@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"regexp"
+	"strings"
 	"syscall"
 )
 
@@ -11,6 +12,10 @@ type osxProvider struct {
 }
 
 var pwRe = regexp.MustCompile(`password:\s+(?:0x[A-Fa-f0-9]+\s+)?"(.+)"`)
+
+func unescape(raw string) string {
+	return strings.Replace(raw, "\\134", "\\", -1)
+}
 
 func (p osxProvider) Get(Service, Username string) (string, error) {
 	args := []string{"find-generic-password",
@@ -31,7 +36,7 @@ func (p osxProvider) Get(Service, Username string) (string, error) {
 	if len(matches) != 2 {
 		return "", ErrNotFound
 	}
-	return matches[1], nil
+	return unescape(matches[1]), nil
 }
 
 func (p osxProvider) Set(Service, Username, Password string) error {
