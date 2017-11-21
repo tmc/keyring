@@ -1,30 +1,46 @@
 package keyring
 
 import (
-	"fmt"
 	"testing"
 )
 
-func TestBasicSetGet(t *testing.T) {
+func assertPasswordSticks(t *testing.T, user, password string) {
 	var (
 		pw  string
 		err error
 	)
-	pw, err = Get("keyring-test", "jack")
+	pw, err = Get("keyring-test", user)
 	if err != nil {
 		// ok on initial invokation
-		fmt.Println("Get() error:", err)
+		t.Logf("(expected) Initial Get() error for %s: %s", user, err)
 	}
-	err = Set("keyring-test", "jack", "test")
+	err = Set("keyring-test", user, password)
 	if err != nil {
-		t.Error("Set() error:", err)
+		t.Errorf("Set() error for %s: %s", user, err)
 	}
-	pw, err = Get("keyring-test", "jack")
+	pw, err = Get("keyring-test", user)
 	if err != nil {
-		t.Error("Get() error:", err)
+		t.Errorf("Get() error for %s: %s", user, err)
 	}
 
-	if pw != "test" {
-		fmt.Errorf("expected 'test', got '%s'", pw)
+	if pw != password {
+		t.Errorf("expected '%s' for %s, got '%s'", password, user, pw)
+	}
+}
+
+func TestBasicSetGet(t *testing.T) {
+	cases := []struct {
+		user     string
+		password string
+	}{
+		{"jack", "foo"},
+		{"jill", "bar"},
+		{"alice", "cr4zyp!s\\%"},
+		{"punctuator", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"},
+		{"pierre", "bérets"},
+		{"unibomba", "I❤Unicode"},
+	}
+	for _, testCase := range cases {
+		assertPasswordSticks(t, testCase.user, testCase.password)
 	}
 }
