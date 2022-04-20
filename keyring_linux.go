@@ -1,3 +1,4 @@
+//go:build !gnome_keyring
 // +build !gnome_keyring
 
 package keyring
@@ -5,7 +6,7 @@ package keyring
 import (
 	"fmt"
 
-	dbus "github.com/guelfey/go.dbus"
+	dbus "github.com/godbus/dbus/v5"
 )
 
 const (
@@ -43,12 +44,12 @@ func newSSSecret(session dbus.ObjectPath, secret string) (s ssSecret) {
 // ssProvider implements the provider interface freedesktop SecretService
 type ssProvider struct {
 	*dbus.Conn
-	srv *dbus.Object
+	srv dbus.BusObject
 }
 
 // This is used to open a seassion for every get/set. Alternative might be to
 // defer() the call to close when constructing the ssProvider
-func (s *ssProvider) openSession() (*dbus.Object, error) {
+func (s *ssProvider) openSession() (dbus.BusObject, error) {
 	var disregard dbus.Variant
 	var sessionPath dbus.ObjectPath
 	method := fmt.Sprint(ssServiceIface, "OpenSession")

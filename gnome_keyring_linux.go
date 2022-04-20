@@ -1,3 +1,4 @@
+//go:build gnome_keyring
 // +build gnome_keyring
 
 package keyring
