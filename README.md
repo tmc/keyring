@@ -10,6 +10,7 @@ Currently implemented:
 - OSX
 - SecretService
 - gnome-keychain (via "gnome_keyring" build flag)
+- Windows
 
 Contributions welcome!
 
