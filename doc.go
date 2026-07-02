@@ -1,6 +1,5 @@
 /*
-Package keyring provides a cross-platform interface to keychains for
-password management
+Package keyring provides a cross-platform interface to system keychains.
 
 Currently implemented:
 
@@ -14,8 +13,17 @@ Currently implemented:
 Example usage:
 
 	err := keyring.Set("libraryFoo", "jack", "sacrifice")
+	if err != nil {
+		log.Fatal(err)
+	}
 	password, err := keyring.Get("libraryFoo", "jack")
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println(password)
 	err = keyring.Delete("libraryFoo", "jack")
+	if err != nil {
+		log.Fatal(err)
+	}
 */
 package keyring

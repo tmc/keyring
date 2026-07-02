@@ -1,6 +1,6 @@
 # keyring provides cross-platform keychain access
 
-http://godoc.org/github.com/tmc/keyring
+https://pkg.go.dev/github.com/tmc/keyring
 
 Keyring provides a common interface to keyring/keychain tools.
 
@@ -20,6 +20,7 @@ Usage example:
   err := keyring.Set("libraryFoo", "jack", "sacrifice")
   password, err := keyring.Get("libraryFoo", "jack")
   fmt.Println(password) //Output: sacrifice
+  err = keyring.Delete("libraryFoo", "jack")
 ```
 
 ## Linux
@@ -43,4 +44,3 @@ Tests on Linux:
  $ # for gnome-keyring provider
  $ go test -tags gnome_keyring github.com/tmc/keyring
 ```
-
