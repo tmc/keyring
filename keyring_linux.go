@@ -66,7 +66,7 @@ func (s *ssProvider) unlock(p dbus.ObjectPath) error {
 	method := fmt.Sprint(ssServiceIface, "Unlock")
 	err := s.srv.Call(method, 0, []dbus.ObjectPath{p}).Store(&unlocked, &prompt)
 	if err != nil {
-		return fmt.Errorf("keyring/dbus: Unlock error: %s", err)
+		return fmt.Errorf("keyring/dbus: unlock: %w", err)
 	}
 	if prompt != dbus.ObjectPath("/") {
 		method = fmt.Sprint(ssPromptIface, "Prompt")
@@ -89,14 +89,16 @@ func (s *ssProvider) Get(c, u string) (string, error) {
 		return "", err
 	}
 	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	s.unlock(ssCollectionPath)
+	if err := s.unlock(ssCollectionPath); err != nil {
+		return "", err
+	}
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
 	method := fmt.Sprint(ssCollectionIface, "SearchItems")
 	call := collection.Call(method, 0, search)
 	err = call.Store(&results)
-	if call.Err != nil {
-		return "", call.Err
+	if err != nil {
+		return "", err
 	}
 	// results is a slice. Just grab the first one.
 	if len(results) == 0 {
@@ -126,17 +128,21 @@ func (s *ssProvider) Set(c, u, p string) error {
 		return err
 	}
 	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	s.unlock(ssCollectionPath)
+	if err := s.unlock(ssCollectionPath); err != nil {
+		return err
+	}
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
 	secret := newSSSecret(session.Path(), p)
 	// the bool is "replace"
 	err = collection.Call(fmt.Sprint(ssCollectionIface, "CreateItem"), 0, properties, secret, true).Store(&item, &prompt)
 	if err != nil {
-		return fmt.Errorf("keyring/dbus: CreateItem error: %s", err)
+		return fmt.Errorf("keyring/dbus: create item: %w", err)
 	}
 	if prompt != "/" {
-		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
+		if err := s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock").Err; err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -153,14 +159,16 @@ func (s *ssProvider) Delete(c, u string) error {
 		return err
 	}
 	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
-	s.unlock(ssCollectionPath)
+	if err := s.unlock(ssCollectionPath); err != nil {
+		return err
+	}
 	collection := s.Object(ssServiceName, ssCollectionPath)
 
 	method := fmt.Sprint(ssCollectionIface, "SearchItems")
 	call := collection.Call(method, 0, search)
 	err = call.Store(&results)
-	if call.Err != nil {
-		return call.Err
+	if err != nil {
+		return err
 	}
 	// results is a slice. Just delete the first one.
 	if len(results) == 0 {
@@ -174,7 +182,9 @@ func (s *ssProvider) Delete(c, u string) error {
 		return err
 	}
 	if prompt != "/" {
-		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
+		if err := s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock").Err; err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -26,8 +26,8 @@ gboolean gkr_set_password(gchar *description, gchar *service, gchar *username, g
 		NULL,
 		description,
 		password,
-    NULL,
-    err,
+		NULL,
+		err,
 		"service", service,
 		"username", username,
 		NULL);
@@ -36,7 +36,7 @@ gboolean gkr_set_password(gchar *description, gchar *service, gchar *username, g
 gchar * gkr_get_password(gchar *service, gchar *username, GError **err) {
 	return secret_password_lookup_sync(
 		&keyring_schema,
-    NULL,
+		NULL,
 		err,
 		"service", service,
 		"username", username,
@@ -46,7 +46,7 @@ gchar * gkr_get_password(gchar *service, gchar *username, GError **err) {
 gboolean gkr_delete_password(gchar *service, gchar *username, GError **err) {
 	return secret_password_clear_sync(
 		&keyring_schema,
-    NULL,
+		NULL,
 		err,
 		"service", service,
 		"username", username,
@@ -62,6 +62,14 @@ import (
 
 type gnomeKeyring struct{}
 
+func gnomeKeyringError(gerr *C.GError) error {
+	if gerr == nil {
+		return ErrNotFound
+	}
+	defer C.g_error_free(gerr)
+	return fmt.Errorf("gnome-keyring: %s", C.GoString((*C.char)(gerr.message)))
+}
+
 func (p gnomeKeyring) Set(Service, Username, Password string) error {
 	desc := (*C.gchar)(C.CString("Username and password for " + Service))
 	username := (*C.gchar)(C.CString(Username))
@@ -74,10 +82,9 @@ func (p gnomeKeyring) Set(Service, Username, Password string) error {
 
 	var gerr *C.GError
 	result := C.gkr_set_password(desc, service, username, password, &gerr)
-	defer C.free(unsafe.Pointer(gerr))
 
 	if result == 0 {
-		return fmt.Errorf("Gnome-keyring error: %+v", gerr)
+		return gnomeKeyringError(gerr)
 	}
 	return nil
 }
@@ -92,33 +99,26 @@ func (p gnomeKeyring) Get(Service string, Username string) (string, error) {
 	defer C.free(unsafe.Pointer(service))
 
 	pw = C.gkr_get_password(service, username, &gerr)
-	defer C.free(unsafe.Pointer(gerr))
 	defer C.secret_password_free((*C.gchar)(pw))
 
 	if pw == nil {
-		return "", fmt.Errorf("Gnome-keyring error: %+v", gerr)
+		return "", gnomeKeyringError(gerr)
 	}
 	return C.GoString((*C.char)(pw)), nil
 }
 
-func (p gnomeKeyring) Delete(Service string, Username string) error {
+func (p gnomeKeyring) Delete(service, username string) error {
 	var gerr *C.GError
 
-	username := (*C.gchar)(C.CString(Username))
-	service := (*C.gchar)(C.CString(Service))
-	defer C.free(unsafe.Pointer(username))
-	defer C.free(unsafe.Pointer(service))
+	cusername := (*C.gchar)(C.CString(username))
+	cservice := (*C.gchar)(C.CString(service))
+	defer C.free(unsafe.Pointer(cusername))
+	defer C.free(unsafe.Pointer(cservice))
 
-	result := C.gkr_delete_password(service, username, &gerr)
-	defer C.free(unsafe.Pointer(gerr))
+	result := C.gkr_delete_password(cservice, cusername, &gerr)
 
 	if result == 0 {
-		// secret_password_clear_sync returns FALSE with no error when
-		// no matching password exists.
-		if gerr == nil {
-			return ErrNotFound
-		}
-		return fmt.Errorf("Gnome-keyring error: %+v", gerr)
+		return gnomeKeyringError(gerr)
 	}
 	return nil
 }

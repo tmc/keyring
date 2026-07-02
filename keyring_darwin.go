@@ -1,11 +1,11 @@
 package keyring
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"regexp"
 	"strconv"
-	"syscall"
 )
 
 type osxProvider struct {
@@ -36,12 +36,10 @@ func (p osxProvider) Get(Service, Username string) (string, error) {
 	c := exec.Command("/usr/bin/security", args...)
 	o, err := c.CombinedOutput()
 	if err != nil {
-		exitCode := c.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
-		// check particular exit code
-		if exitCode == 44 {
+		if exitCode(err) == 44 {
 			return "", ErrNotFound
 		}
-		return "", fmt.Errorf("/usr/bin/security: %s", err)
+		return "", fmt.Errorf("/usr/bin/security: %w", err)
 	}
 	matches := pwRe.FindStringSubmatch(string(o))
 	if len(matches) != 2 {
@@ -57,29 +55,34 @@ func (p osxProvider) Set(Service, Username, Password string) error {
 		"-w", Password,
 		"-U"}
 	c := exec.Command("/usr/bin/security", args...)
-	err := c.Run()
+	o, err := c.CombinedOutput()
 	if err != nil {
-		o, _ := c.CombinedOutput()
-		return fmt.Errorf(string(o))
+		return fmt.Errorf("/usr/bin/security: %w: %s", err, o)
 	}
 	return nil
 }
 
-func (p osxProvider) Delete(Service, Username string) error {
+func (p osxProvider) Delete(service, username string) error {
 	args := []string{"delete-generic-password",
-		"-s", Service,
-		"-a", Username}
+		"-s", service,
+		"-a", username}
 	c := exec.Command("/usr/bin/security", args...)
 	err := c.Run()
 	if err != nil {
-		exitCode := c.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
-		// check particular exit code
-		if exitCode == 44 {
+		if exitCode(err) == 44 {
 			return ErrNotFound
 		}
-		return fmt.Errorf("/usr/bin/security: %s", err)
+		return fmt.Errorf("/usr/bin/security: %w", err)
 	}
 	return nil
+}
+
+func exitCode(err error) int {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		return exitErr.ExitCode()
+	}
+	return -1
 }
 
 func initializeProvider() (provider, error) {
