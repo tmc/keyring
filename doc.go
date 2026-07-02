@@ -7,6 +7,7 @@ Currently implemented:
   - OSX
   - SecretService
   - gnome-keychain (via "gnome_keyring" build flag)
+  - Windows Credential Manager
 
 # Usage
 
@@ -15,10 +16,6 @@ Example usage:
 	err := keyring.Set("libraryFoo", "jack", "sacrifice")
 	password, err := keyring.Get("libraryFoo", "jack")
 	fmt.Println(password)
-	Output: sacrifice
-
-TODO
-
-  - Write Windows provider
+	err = keyring.Delete("libraryFoo", "jack")
 */
 package keyring
