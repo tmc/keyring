@@ -2,7 +2,6 @@
 //
 // May need to be built with a platform-specific build flag to specify a
 // provider. See keyring documentation for details.
-//
 package main
 
 import (

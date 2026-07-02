@@ -4,24 +4,21 @@ password management
 
 Currently implemented:
 
- * OSX
- * SecretService
- * gnome-keychain (via "gnome_keyring" build flag)
+  - OSX
+  - SecretService
+  - gnome-keychain (via "gnome_keyring" build flag)
 
-
-Usage
+# Usage
 
 Example usage:
 
-
-   err := keyring.Set("libraryFoo", "jack", "sacrifice")
-   password, err := keyring.Get("libraryFoo", "jack")
-   fmt.Println(password)
-   Output: sacrifice
-
+	err := keyring.Set("libraryFoo", "jack", "sacrifice")
+	password, err := keyring.Get("libraryFoo", "jack")
+	fmt.Println(password)
+	Output: sacrifice
 
 TODO
 
-    * Write Windows provider
+  - Write Windows provider
 */
 package keyring
