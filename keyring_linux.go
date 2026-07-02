@@ -40,10 +40,14 @@ func newSSSecret(session dbus.ObjectPath, secret string) (s ssSecret) {
 	return
 }
 
-// ssProvider implements the provider interface freedesktop SecretService
+// ssProvider implements the Provider interface for freedesktop SecretService.
 type ssProvider struct {
 	*dbus.Conn
 	srv dbus.BusObject
+}
+
+func init() {
+	RegisterProvider("secretservice", 10, &lazyProvider{init: initializeProvider})
 }
 
 // This is used to open a seassion for every get/set. Alternative might be to
@@ -189,7 +193,7 @@ func (s *ssProvider) Delete(c, u string) error {
 	return nil
 }
 
-func initializeProvider() (provider, error) {
+func initializeProvider() (Provider, error) {
 	conn, err := dbus.SessionBus()
 	if err != nil {
 		return nil, err

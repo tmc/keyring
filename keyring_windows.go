@@ -9,6 +9,10 @@ import (
 type winProvider struct {
 }
 
+func init() {
+	RegisterProvider("windows", 10, &winProvider{})
+}
+
 func (p *winProvider) Get(Service, Username string) (string, error) {
 	cred1, err := wincred.GetGenericCredential(Service)
 	if err == nil && cred1.UserName == Username {
@@ -34,8 +38,4 @@ func (p *winProvider) Delete(Service, Username string) error {
 		return ErrNotFound
 	}
 	return cred.Delete()
-}
-
-func initializeProvider() (provider, error) {
-	return &winProvider{}, nil
 }

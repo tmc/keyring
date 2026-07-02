@@ -11,6 +11,10 @@ import (
 type osxProvider struct {
 }
 
+func init() {
+	RegisterProvider("osx", 10, osxProvider{})
+}
+
 var pwRe = regexp.MustCompile(`password:\s+(?:0x[A-Fa-f0-9]+\s+)?"(.+)"`)
 
 var escapeCodeRegexp = regexp.MustCompile(`\\([0-3][0-7]{2})`)
@@ -83,8 +87,4 @@ func exitCode(err error) int {
 		return exitErr.ExitCode()
 	}
 	return -1
-}
-
-func initializeProvider() (provider, error) {
-	return osxProvider{}, nil
 }

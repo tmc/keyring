@@ -62,6 +62,10 @@ import (
 
 type gnomeKeyring struct{}
 
+func init() {
+	RegisterProvider("gnome-keyring", 10, gnomeKeyring{})
+}
+
 func gnomeKeyringError(gerr *C.GError) error {
 	if gerr == nil {
 		return ErrNotFound
@@ -121,8 +125,4 @@ func (p gnomeKeyring) Delete(service, username string) error {
 		return gnomeKeyringError(gerr)
 	}
 	return nil
-}
-
-func initializeProvider() (provider, error) {
-	return gnomeKeyring{}, nil
 }
