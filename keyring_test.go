@@ -1,24 +1,29 @@
 package keyring
 
 import (
+	"errors"
 	"testing"
 )
 
-func assertPasswordSticks(t *testing.T, user, password string) {
+func assertPasswordSticks(t *testing.T, service, user, password string) {
+	t.Helper()
 	var (
 		pw  string
 		err error
 	)
-	pw, err = Get("keyring-test", user)
+	t.Cleanup(func() {
+		_ = Delete(service, user)
+	})
+	pw, err = Get(service, user)
 	if err != nil {
-		// ok on initial invokation
+		// ok on initial invocation
 		t.Logf("(expected) Initial Get() error for %s: %s", user, err)
 	}
-	err = Set("keyring-test", user, password)
+	err = Set(service, user, password)
 	if err != nil {
 		t.Errorf("Set() error for %s: %s", user, err)
 	}
-	pw, err = Get("keyring-test", user)
+	pw, err = Get(service, user)
 	if err != nil {
 		t.Errorf("Get() error for %s: %s", user, err)
 	}
@@ -29,6 +34,7 @@ func assertPasswordSticks(t *testing.T, user, password string) {
 }
 
 func TestBasicSetGet(t *testing.T) {
+	service := "keyring-test"
 	cases := []struct {
 		user     string
 		password string
@@ -41,7 +47,7 @@ func TestBasicSetGet(t *testing.T) {
 		{"unibomba", "I❤Unicode"},
 	}
 	for _, testCase := range cases {
-		assertPasswordSticks(t, testCase.user, testCase.password)
+		assertPasswordSticks(t, service, testCase.user, testCase.password)
 	}
 }
 
@@ -49,14 +55,15 @@ func TestDelete(t *testing.T) {
 	service := "keyring-test-delete"
 	user := "deleteuser"
 	password := "deletepass"
+	t.Cleanup(func() {
+		_ = Delete(service, user)
+	})
 
-	// Set a password
 	err := Set(service, user, password)
 	if err != nil {
 		t.Fatalf("Set() error: %s", err)
 	}
 
-	// Verify it was set
 	pw, err := Get(service, user)
 	if err != nil {
 		t.Fatalf("Get() error after Set(): %s", err)
@@ -65,15 +72,13 @@ func TestDelete(t *testing.T) {
 		t.Errorf("expected '%s', got '%s'", password, pw)
 	}
 
-	// Delete the password
 	err = Delete(service, user)
 	if err != nil {
 		t.Fatalf("Delete() error: %s", err)
 	}
 
-	// Verify it was deleted
 	_, err = Get(service, user)
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("expected ErrNotFound after Delete(), got: %v", err)
 	}
 }
@@ -82,9 +87,8 @@ func TestDeleteNonExistent(t *testing.T) {
 	service := "keyring-test-delete-nonexistent"
 	user := "nonexistentuser"
 
-	// Try to delete a non-existent password
 	err := Delete(service, user)
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("expected ErrNotFound for non-existent password, got: %v", err)
 	}
 }
