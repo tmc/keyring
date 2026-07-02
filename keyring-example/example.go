@@ -5,18 +5,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"syscall"
 
 	"github.com/tmc/keyring"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func main() {
 	if pw, err := keyring.Get("keyring_example", "jack"); err == nil {
 		fmt.Println("current stored password:", pw)
-	} else if err == keyring.ErrNotFound {
+	} else if errors.Is(err, keyring.ErrNotFound) {
 		fmt.Println("no password stored yet")
 	} else {
 		fmt.Println("got unexpected error:", err)
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	fmt.Printf("enter new password: ")
-	pw, err := terminal.ReadPassword(int(syscall.Stdin))
+	pw, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -40,5 +40,8 @@ func main() {
 		fmt.Println("got", pw)
 	} else {
 		fmt.Println("error:", err)
+	}
+	if err := keyring.Delete("keyring_example", "jack"); err != nil {
+		fmt.Println("delete error:", err)
 	}
 }
