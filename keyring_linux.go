@@ -142,6 +142,44 @@ func (s *ssProvider) Set(c, u, p string) error {
 	return nil
 }
 
+func (s *ssProvider) Delete(c, u string) error {
+	results := []dbus.ObjectPath{}
+	search := map[string]string{
+		"username": u,
+		"service":  c,
+	}
+
+	session, err := s.openSession()
+	if err != nil {
+		return err
+	}
+	defer session.Call(fmt.Sprint(ssSessionIface, "Close"), 0)
+	s.unlock(ssCollectionPath)
+	collection := s.Object(ssServiceName, ssCollectionPath)
+
+	method := fmt.Sprint(ssCollectionIface, "SearchItems")
+	call := collection.Call(method, 0, search)
+	err = call.Store(&results)
+	if call.Err != nil {
+		return call.Err
+	}
+	// results is a slice. Just delete the first one.
+	if len(results) == 0 {
+		return ErrNotFound
+	}
+
+	var prompt dbus.ObjectPath
+	method = fmt.Sprint(ssItemIface, "Delete")
+	err = s.Object(ssServiceName, results[0]).Call(method, 0).Store(&prompt)
+	if err != nil {
+		return err
+	}
+	if prompt != "/" {
+		s.Object(ssServiceName, prompt).Call(fmt.Sprint(ssPromptIface, "Prompt"), 0, "unlock")
+	}
+	return nil
+}
+
 func initializeProvider() (provider, error) {
 	conn, err := dbus.SessionBus()
 	if err != nil {

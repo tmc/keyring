@@ -43,6 +43,16 @@ gchar * gkr_get_password(gchar *service, gchar *username, GError **err) {
 		"username", username,
 		NULL);
 }
+
+gboolean gkr_delete_password(gchar *service, gchar *username, GError **err) {
+	return secret_password_clear_sync(
+		&keyring_schema,
+    NULL,
+		err,
+		"service", service,
+		"username", username,
+		NULL);
+}
 */
 import "C"
 
@@ -90,6 +100,28 @@ func (p gnomeKeyring) Get(Service string, Username string) (string, error) {
 		return "", fmt.Errorf("Gnome-keyring error: %+v", gerr)
 	}
 	return C.GoString((*C.char)(pw)), nil
+}
+
+func (p gnomeKeyring) Delete(Service string, Username string) error {
+	var gerr *C.GError
+
+	username := (*C.gchar)(C.CString(Username))
+	service := (*C.gchar)(C.CString(Service))
+	defer C.free(unsafe.Pointer(username))
+	defer C.free(unsafe.Pointer(service))
+
+	result := C.gkr_delete_password(service, username, &gerr)
+	defer C.free(unsafe.Pointer(gerr))
+
+	if result == 0 {
+		// secret_password_clear_sync returns FALSE with no error when
+		// no matching password exists.
+		if gerr == nil {
+			return ErrNotFound
+		}
+		return fmt.Errorf("Gnome-keyring error: %+v", gerr)
+	}
+	return nil
 }
 
 func initializeProvider() (provider, error) {

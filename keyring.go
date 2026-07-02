@@ -20,6 +20,7 @@ var (
 type provider interface {
 	Get(service, username string) (string, error)
 	Set(service, username, password string) error
+	Delete(service, username string) error
 }
 
 func setupProvider() (provider, error) {
@@ -55,4 +56,15 @@ func Set(service, username, password string) error {
 	}
 
 	return p.Set(service, username, password)
+}
+
+// Delete removes the password for a particular Service and Username using the
+// default keyring provider.
+func Delete(service, username string) error {
+	p, err := setupProvider()
+	if err != nil {
+		return err
+	}
+
+	return p.Delete(service, username)
 }

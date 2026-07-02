@@ -44,3 +44,47 @@ func TestBasicSetGet(t *testing.T) {
 		assertPasswordSticks(t, testCase.user, testCase.password)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	service := "keyring-test-delete"
+	user := "deleteuser"
+	password := "deletepass"
+
+	// Set a password
+	err := Set(service, user, password)
+	if err != nil {
+		t.Fatalf("Set() error: %s", err)
+	}
+
+	// Verify it was set
+	pw, err := Get(service, user)
+	if err != nil {
+		t.Fatalf("Get() error after Set(): %s", err)
+	}
+	if pw != password {
+		t.Errorf("expected '%s', got '%s'", password, pw)
+	}
+
+	// Delete the password
+	err = Delete(service, user)
+	if err != nil {
+		t.Fatalf("Delete() error: %s", err)
+	}
+
+	// Verify it was deleted
+	_, err = Get(service, user)
+	if err != ErrNotFound {
+		t.Errorf("expected ErrNotFound after Delete(), got: %v", err)
+	}
+}
+
+func TestDeleteNonExistent(t *testing.T) {
+	service := "keyring-test-delete-nonexistent"
+	user := "nonexistentuser"
+
+	// Try to delete a non-existent password
+	err := Delete(service, user)
+	if err != ErrNotFound {
+		t.Errorf("expected ErrNotFound for non-existent password, got: %v", err)
+	}
+}

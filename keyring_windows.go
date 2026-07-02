@@ -25,6 +25,17 @@ func (p *winProvider) Set(Service, Username, Password string) error {
 	return cred.Write()
 }
 
+func (p *winProvider) Delete(Service, Username string) error {
+	cred, err := wincred.GetGenericCredential(Service)
+	if err != nil {
+		return ErrNotFound
+	}
+	if cred.UserName != Username {
+		return ErrNotFound
+	}
+	return cred.Delete()
+}
+
 func initializeProvider() (provider, error) {
 	return &winProvider{}, nil
 }

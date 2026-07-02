@@ -65,6 +65,23 @@ func (p osxProvider) Set(Service, Username, Password string) error {
 	return nil
 }
 
+func (p osxProvider) Delete(Service, Username string) error {
+	args := []string{"delete-generic-password",
+		"-s", Service,
+		"-a", Username}
+	c := exec.Command("/usr/bin/security", args...)
+	err := c.Run()
+	if err != nil {
+		exitCode := c.ProcessState.Sys().(syscall.WaitStatus).ExitStatus()
+		// check particular exit code
+		if exitCode == 44 {
+			return ErrNotFound
+		}
+		return fmt.Errorf("/usr/bin/security: %s", err)
+	}
+	return nil
+}
+
 func initializeProvider() (provider, error) {
 	return osxProvider{}, nil
 }
