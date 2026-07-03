@@ -6,6 +6,8 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -233,6 +235,106 @@ func TestFileProviderRequiresPassphrase(t *testing.T) {
 	}
 	if err := p.Delete("service", "user"); !errors.Is(err, errFileProviderPassphrase) {
 		t.Fatalf("Delete() error = %v, want passphrase error", err)
+	}
+}
+
+func TestFileProviderListUsers(t *testing.T) {
+	p, _ := testFileProvider(t, "test-pass")
+
+	if err := p.Set("svc", "alice", "a"); err != nil {
+		t.Fatalf("Set alice error: %v", err)
+	}
+	if err := p.Set("svc", "bob", "b"); err != nil {
+		t.Fatalf("Set bob error: %v", err)
+	}
+	if err := p.Set("other", "carol", "c"); err != nil {
+		t.Fatalf("Set carol error: %v", err)
+	}
+
+	users, err := p.ListUsers("svc")
+	if err != nil {
+		t.Fatalf("ListUsers() error: %v", err)
+	}
+	sort.Strings(users)
+	if want := []string{"alice", "bob"}; !reflect.DeepEqual(users, want) {
+		t.Fatalf("ListUsers() = %v, want %v", users, want)
+	}
+
+	empty, err := p.ListUsers("missing")
+	if err != nil {
+		t.Fatalf("ListUsers(missing) error: %v", err)
+	}
+	if len(empty) != 0 {
+		t.Fatalf("ListUsers(missing) = %v, want empty", empty)
+	}
+}
+
+func TestFileProviderDeleteAll(t *testing.T) {
+	p, _ := testFileProvider(t, "test-pass")
+
+	if err := p.Set("svc", "alice", "a"); err != nil {
+		t.Fatalf("Set alice error: %v", err)
+	}
+	if err := p.Set("svc", "bob", "b"); err != nil {
+		t.Fatalf("Set bob error: %v", err)
+	}
+	if err := p.Set("keep", "carol", "c"); err != nil {
+		t.Fatalf("Set carol error: %v", err)
+	}
+
+	if err := p.DeleteAll("svc"); err != nil {
+		t.Fatalf("DeleteAll() error: %v", err)
+	}
+	if _, err := p.Get("svc", "alice"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Get(svc, alice) after DeleteAll error = %v, want ErrNotFound", err)
+	}
+	if _, err := p.Get("svc", "bob"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Get(svc, bob) after DeleteAll error = %v, want ErrNotFound", err)
+	}
+	if got, err := p.Get("keep", "carol"); err != nil || got != "c" {
+		t.Fatalf("Get(keep, carol) = (%q, %v), want (c, nil)", got, err)
+	}
+
+	if err := p.DeleteAll("missing"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("DeleteAll(missing) error = %v, want ErrNotFound", err)
+	}
+}
+
+func TestListUsersViaProvider(t *testing.T) {
+	saveProviders(t)
+
+	p, _ := testFileProvider(t, "test-pass")
+	RegisterProvider("file", 1, p)
+	if err := Set("svc", "alice", "a"); err != nil {
+		t.Fatalf("Set() error: %v", err)
+	}
+
+	users, err := ListUsers("svc")
+	if err != nil {
+		t.Fatalf("ListUsers() error: %v", err)
+	}
+	if !reflect.DeepEqual(users, []string{"alice"}) {
+		t.Fatalf("ListUsers() = %v, want [alice]", users)
+	}
+	if err := DeleteAll("svc"); err != nil {
+		t.Fatalf("DeleteAll() error: %v", err)
+	}
+	if _, err := Get("svc", "alice"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("Get() after DeleteAll error = %v, want ErrNotFound", err)
+	}
+}
+
+func TestListUsersUnsupportedProvider(t *testing.T) {
+	saveProviders(t)
+
+	// fakeProvider implements only the core Provider interface.
+	RegisterProvider("fake", 1, newFakeProvider("fake"))
+
+	if _, err := ListUsers("svc"); !errors.Is(err, ErrNotSupported) {
+		t.Fatalf("ListUsers() error = %v, want ErrNotSupported", err)
+	}
+	if err := DeleteAll("svc"); !errors.Is(err, ErrNotSupported) {
+		t.Fatalf("DeleteAll() error = %v, want ErrNotSupported", err)
 	}
 }
 

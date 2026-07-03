@@ -31,6 +31,12 @@ const (
 
 var errFileProviderPassphrase = errors.New("keyring: file provider requires a passphrase (set KEYRING_PASSPHRASE or FileOptions.Passphrase)")
 
+var (
+	_ Provider   = (*FileProvider)(nil)
+	_ Lister     = (*FileProvider)(nil)
+	_ DeleterAll = (*FileProvider)(nil)
+)
+
 // FileProvider is a platform-neutral keyring Provider that stores secrets
 // in an encrypted file. It is not registered automatically; construct one
 // with NewFileProvider and register it with RegisterProvider to enable it.
@@ -145,6 +151,50 @@ func (p *FileProvider) Delete(service, username string) error {
 	if len(users) == 0 {
 		delete(store, service)
 	}
+	return p.writeStore(passphrase, salt, store)
+}
+
+// ListUsers returns the usernames stored under service, in unspecified order.
+// It returns an empty slice when the service has no entries. FileProvider
+// implements the package Lister interface.
+func (p *FileProvider) ListUsers(service string) ([]string, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	passphrase, err := p.resolvePassphrase()
+	if err != nil {
+		return nil, err
+	}
+	store, _, err := p.readStore(passphrase)
+	if err != nil {
+		return nil, err
+	}
+	users := make([]string, 0, len(store[service]))
+	for username := range store[service] {
+		users = append(users, username)
+	}
+	return users, nil
+}
+
+// DeleteAll removes every entry stored under service. It returns ErrNotFound
+// when the service has no entries. FileProvider implements the package
+// DeleterAll interface.
+func (p *FileProvider) DeleteAll(service string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	passphrase, err := p.resolvePassphrase()
+	if err != nil {
+		return err
+	}
+	store, salt, err := p.readStore(passphrase)
+	if err != nil {
+		return err
+	}
+	if _, ok := store[service]; !ok {
+		return ErrNotFound
+	}
+	delete(store, service)
 	return p.writeStore(passphrase, salt, store)
 }
 
