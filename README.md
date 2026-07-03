@@ -6,6 +6,8 @@ Keyring provides a common interface to keyring/keychain tools.
 
 License: ISC
 
+Requires Go 1.25 or later.
+
 Currently implemented:
 - OSX
 - SecretService

@@ -1,12 +1,12 @@
 module github.com/tmc/keyring
 
-go 1.18
+go 1.25.0
 
 require (
-	github.com/danieljoos/wincred v1.1.2
-	github.com/godbus/dbus/v5 v5.1.0
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
+	github.com/danieljoos/wincred v1.2.3
+	github.com/godbus/dbus/v5 v5.2.2
+	golang.org/x/crypto v0.53.0
+	golang.org/x/term v0.44.0
 )
 
-require golang.org/x/sys v0.1.0 // indirect
+require golang.org/x/sys v0.46.0 // indirect
