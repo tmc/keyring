@@ -10,6 +10,9 @@ var (
 	ErrNotFound = errors.New("keyring: password not found")
 	// ErrNoDefault means that no default keyring provider has been found
 	ErrNoDefault = errors.New("keyring: no suitable keyring provider found (check your build flags)")
+	// ErrSetDataTooBig means the secret exceeds a limit imposed by the
+	// underlying platform provider.
+	ErrSetDataTooBig = errors.New("keyring: secret too large for provider")
 
 	providersMu sync.Mutex
 	providers   []providerRegistration

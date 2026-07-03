@@ -47,10 +47,8 @@ Tests on Linux:
 
 ## Security considerations
 
-- macOS: passwords are passed to `/usr/bin/security` with the `-w`
-  command-line argument. They may be briefly visible in the process argument
-  list to other processes on the same machine. A future implementation should
-  call Keychain Services directly.
+- macOS: the secret is written to `/usr/bin/security` over stdin (base64-encoded
+  so any byte value survives), so it is not exposed in the process argument list.
 - Linux SecretService: sessions are opened with `"plain"` negotiation, so
   secrets traverse the user's D-Bus session bus unencrypted. A local process
   able to snoop that bus could read them. A future implementation should use
