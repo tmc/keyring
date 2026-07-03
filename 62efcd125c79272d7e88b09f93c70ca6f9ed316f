@@ -1,0 +1,6 @@
+commit: 62efcd125c79272d7e88b09f93c70ca6f9ed316f
+date: 2026-07-02 18:27:53 -0700
+claude-code: 2.1.197
+model: claude-opus-4-8
+driver: opus-4.8 driving codex gpt-5.5 in it2 session 88175095
+context: documents pre-existing security limitations surfaced by go-team panel review
