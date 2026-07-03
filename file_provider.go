@@ -44,11 +44,12 @@ var (
 // A FileProvider is safe for concurrent use through a single instance.
 // Concurrent writers to the same file through separate FileProvider instances
 // or separate processes are not coordinated; the last writer wins. Writes use
-// a temporary file and rename, so readers see either the old file or the new
-// file; file contents are fsynced before rename. Each Get, Set, and Delete
-// derives the key with memory-hard Argon2id and operations on one instance are
-// serialized by a mutex, so FileProvider is intended for low-frequency fallback
-// use, not high-throughput lookups.
+// a temporary file and rename. On Unix, readers see either the old file or the
+// new file; rename atomicity varies on other systems. File contents are fsynced
+// before rename. Each Get, Set, and Delete derives the key with memory-hard
+// Argon2id and operations on one instance are serialized by a mutex, so
+// FileProvider is intended for low-frequency fallback use, not high-throughput
+// lookups.
 type FileProvider struct {
 	path       string
 	passphrase string

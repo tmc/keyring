@@ -1,4 +1,4 @@
-//go:build gnome_keyring
+//go:build (linux || freebsd || openbsd || netbsd) && gnome_keyring
 
 package keyring
 
