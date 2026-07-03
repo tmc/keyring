@@ -33,6 +33,10 @@ Linux requirements:
 
 - dbus
 
+The default SecretService provider is pure Go and preferred. The
+`gnome_keyring` build tag selects the opt-in cgo/libsecret provider for
+environments that specifically require libsecret.
+
 ### gnome-keychain provider
 
 - gnome-keychain headers

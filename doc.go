@@ -8,6 +8,9 @@ Currently implemented:
   - gnome-keychain (via "gnome_keyring" build flag)
   - Windows Credential Manager
 
+The default SecretService provider is pure Go; gnome_keyring is an advanced cgo
+opt-in for environments that require libsecret.
+
 # Usage
 
 Example usage:
