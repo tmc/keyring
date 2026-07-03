@@ -1,0 +1,9 @@
+commit: 82e4e860959901e7a0aa568f8dc5e6b06877282b
+date: 2026-07-02 17:33:17 -0700
+claude-code: 2.1.197
+model: claude-opus-4-8
+tty: not a tty
+pid: 62178
+ITERM_SESSION_ID: w5t9p6:B8474A35-CAA9-473A-8A1A-86D5FB31FDA2
+driver: opus-4.8 driving codex gpt-5.5 in it2 session 88175095
+issue: implements GitHub #3 (x/crypto Argon2id+XChaCha; nested-map keys after 57AC review found NUL collision)
