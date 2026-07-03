@@ -44,3 +44,17 @@ Tests on Linux:
  $ # for gnome-keyring provider
  $ go test -tags gnome_keyring github.com/tmc/keyring
 ```
+
+## Security considerations
+
+- macOS: passwords are passed to `/usr/bin/security` with the `-w`
+  command-line argument. They may be briefly visible in the process argument
+  list to other processes on the same machine. A future implementation should
+  call Keychain Services directly.
+- Linux SecretService: sessions are opened with `"plain"` negotiation, so
+  secrets traverse the user's D-Bus session bus unencrypted. A local process
+  able to snoop that bus could read them. A future implementation should use
+  `dh-ietf-1024-sha256` session encryption.
+- File provider: security depends on passphrase strength.
+  `KEYRING_PASSPHRASE` can leak to child processes and process listings; prefer
+  `FileOptions.Passphrase` when using `NewFileProvider`.
